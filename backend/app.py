@@ -275,12 +275,6 @@ def delete_comment(current_user, todo_id, comment_id):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
-# Generate Ticket ID
-def generate_ticket_id():
-    import random
-    import string
-    return 'TKT-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-
 # Ticket Routes
 @app.route('/api/tickets', methods=['GET'])
 @token_required
@@ -293,12 +287,26 @@ def get_tickets(current_user):
             ticket['updated_at'] = ticket['updated_at'].isoformat()
     return jsonify(tickets), 200
 
+# Get unique clients for filter
+@app.route('/api/tickets/clients', methods=['GET'])
+@token_required
+def get_ticket_clients(current_user):
+    clients = mongo.db.tickets.distinct('client_name', {'user_id': str(current_user['_id'])})
+    return jsonify(clients), 200
+
 @app.route('/api/tickets', methods=['POST'])
 @token_required
 def create_ticket(current_user):
     data = request.get_json()
+    
+    # Check if ticket_id already exists
+    if data.get('ticket_id'):
+        existing = mongo.db.tickets.find_one({'ticket_id': data.get('ticket_id'), 'user_id': str(current_user['_id'])})
+        if existing:
+            return jsonify({'message': 'Ticket ID already exists'}), 400
+    
     ticket = {
-        'ticket_id': generate_ticket_id(),
+        'ticket_id': data.get('ticket_id'),  # Manual ticket ID
         'client_name': data.get('client_name'),
         'subject': data.get('subject'),
         'description': data.get('description'),

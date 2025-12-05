@@ -44,6 +44,7 @@ export const exportData = {
 export const tickets = {
   getAll: () => api.get('/tickets'),
   getOne: (id) => api.get(`/tickets/${id}`),
+  getClients: () => api.get('/tickets/clients'),
   create: (ticket) => api.post('/tickets', ticket),
   update: (id, ticket) => api.put(`/tickets/${id}`, ticket),
   delete: (id) => api.delete(`/tickets/${id}`)

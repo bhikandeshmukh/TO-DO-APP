@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Check, Plus, Trash2, LogOut, Search, ArrowLeft, Send, MessageCircle, FileText, FileSpreadsheet, Menu, X, ListTodo, Ticket, Home, Clock, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Check, Plus, Trash2, LogOut, Search, ArrowLeft, Send, MessageCircle, FileText, FileSpreadsheet, MoreVertical, X, ListTodo, Ticket, Home, Clock, User } from 'lucide-react';
 import { auth, todos as todosApi, comments as commentsApi, exportData, tickets as ticketsApi, ticketComments as ticketCommentsApi } from './api';
 
 const App = () => {
@@ -30,7 +30,11 @@ const App = () => {
   const [ticketCommentsList, setTicketCommentsList] = useState([]);
   const [newTicketComment, setNewTicketComment] = useState('');
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
-  const [newTicket, setNewTicket] = useState({ client_name: '', subject: '', description: '', priority: 'medium' });
+  const [newTicket, setNewTicket] = useState({ ticket_id: '', client_name: '', subject: '', description: '', priority: 'medium' });
+  const [ticketStatusFilter, setTicketStatusFilter] = useState('all');
+  const [ticketClientFilter, setTicketClientFilter] = useState('all');
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
+  const [clientsList, setClientsList] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -108,18 +112,34 @@ const App = () => {
 
   // Ticket functions
   const fetchTickets = async () => {
-    try { const res = await ticketsApi.getAll(); setTicketsList(res.data); } catch (e) { console.error(e); }
+    try { 
+      const res = await ticketsApi.getAll(); 
+      setTicketsList(res.data);
+      // Get unique clients
+      const clients = [...new Set(res.data.map(t => t.client_name))];
+      setClientsList(clients);
+    } catch (e) { console.error(e); }
   };
 
   const createTicket = async () => {
-    if (!newTicket.client_name || !newTicket.subject) return alert('Client name and subject required');
+    if (!newTicket.ticket_id || !newTicket.client_name || !newTicket.subject) return alert('Ticket ID, Client name and subject required');
     try {
       const res = await ticketsApi.create(newTicket);
       setTicketsList([res.data, ...ticketsList]);
-      setNewTicket({ client_name: '', subject: '', description: '', priority: 'medium' });
+      if (!clientsList.includes(newTicket.client_name)) setClientsList([...clientsList, newTicket.client_name]);
+      setNewTicket({ ticket_id: '', client_name: '', subject: '', description: '', priority: 'medium' });
       setShowNewTicketForm(false);
-    } catch (e) { alert('Failed to create ticket'); }
+    } catch (e) { alert(e.response?.data?.message || 'Failed to create ticket'); }
   };
+  
+  // Filter tickets
+  const filteredTickets = ticketsList.filter(t => {
+    if (ticketStatusFilter !== 'all' && t.status !== ticketStatusFilter) return false;
+    if (ticketClientFilter !== 'all' && t.client_name !== ticketClientFilter) return false;
+    if (ticketSearchQuery && !t.ticket_id.toLowerCase().includes(ticketSearchQuery.toLowerCase()) && 
+        !t.subject.toLowerCase().includes(ticketSearchQuery.toLowerCase())) return false;
+    return true;
+  });
 
   const updateTicketStatus = async (id, status) => {
     try {
@@ -204,60 +224,72 @@ const App = () => {
   );
 
 
-  // Sidebar Component
-  const Sidebar = () => (
-    <>
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:shadow-none lg:border-r`}>
-        {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
-              <Check className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">To Do App</span>
-          </div>
-          <button onClick={closeSidebar} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  // Dropdown Menu Component (3 dots)
+  const DropdownMenu = () => {
+    const menuRef = useRef(null);
+    
+    useEffect(() => {
+      const handleClickOutside = (e) => {
+        if (menuRef.current && !menuRef.current.contains(e.target)) {
+          setSidebarOpen(false);
+        }
+      };
+      if (sidebarOpen) document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [sidebarOpen]);
+
+    return (
+      <div className="relative" ref={menuRef}>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-xl">
+          <MoreVertical className="w-5 h-5 text-gray-600" />
+        </button>
         
-        {/* Navigation */}
-        <nav className="p-4 space-y-2 flex-1">
-          <button onClick={() => navigateTo('todos')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${currentPage === 'todos' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50'}`}>
-            <ListTodo className="w-5 h-5" /> To Do List
-          </button>
-          <button onClick={() => navigateTo('tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${currentPage === 'tickets' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50'}`}>
-            <Ticket className="w-5 h-5" /> Tickets
-          </button>
-        </nav>
-        
-        {/* User Section - Fixed at bottom */}
-        <div className="p-4 border-t bg-white flex-shrink-0">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-indigo-600" />
+        {sidebarOpen && (
+          <div className="absolute right-0 top-12 w-56 bg-white rounded-xl shadow-xl border z-50 py-2">
+            {/* Navigation */}
+            <button onClick={() => navigateTo('todos')} className={`w-full flex items-center gap-3 px-4 py-3 transition ${currentPage === 'todos' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50'}`}>
+              <ListTodo className="w-5 h-5" /> To Do List
+            </button>
+            <button onClick={() => navigateTo('tickets')} className={`w-full flex items-center gap-3 px-4 py-3 transition ${currentPage === 'tickets' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50'}`}>
+              <Ticket className="w-5 h-5" /> Tickets
+            </button>
+            
+            <div className="border-t my-2"></div>
+            
+            {/* User Info */}
+            <div className="px-4 py-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-indigo-600" />
+                </div>
+                <p className="text-sm truncate flex-1">{user.email}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.email}</p>
-            </div>
+            
+            <div className="border-t my-2"></div>
+            
+            {/* Logout */}
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition">
+              <LogOut className="w-5 h-5" /> Logout
+            </button>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl transition">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
-        </div>
+        )}
       </div>
-    </>
-  );
+    );
+  };
 
   // Header Component
   const Header = ({ title, children }) => (
     <div className="bg-white border-b sticky top-0 z-30 px-4 py-3 flex items-center gap-4">
-      <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-xl">
-        <Menu className="w-5 h-5" />
-      </button>
-      <h1 className="text-xl font-bold flex-1">{title}</h1>
+      <div className="flex items-center gap-2">
+        <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
+          <Check className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">To Do App</span>
+      </div>
+      <h1 className="text-lg font-semibold flex-1">{title}</h1>
       {children}
+      <DropdownMenu />
     </div>
   );
 
@@ -355,9 +387,7 @@ const App = () => {
 
   // Main Dashboard Layout
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1 min-w-0">
+    <div className="min-h-screen bg-gray-50">
         {currentPage === 'todos' && (
           <>
             <Header title="To Do List">
@@ -469,14 +499,39 @@ const App = () => {
                 </div>
               </div>
 
+              {/* Filters */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex-1 min-w-[200px] relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input value={ticketSearchQuery} onChange={(e) => setTicketSearchQuery(e.target.value)} placeholder="Search by Ticket ID or Subject..."
+                    className="w-full pl-9 pr-3 py-2 border rounded-lg bg-white" />
+                </div>
+                <select value={ticketClientFilter} onChange={(e) => setTicketClientFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-white">
+                  <option value="all">All Clients</option>
+                  {clientsList.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={ticketStatusFilter} onChange={(e) => setTicketStatusFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-white">
+                  <option value="all">All Status</option>
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+
               {/* New Ticket Form Modal */}
               {showNewTicketForm && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowNewTicketForm(false)}>
                   <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
                     <h2 className="text-xl font-bold mb-4">Create New Ticket</h2>
                     <div className="space-y-3">
+                      <input value={newTicket.ticket_id} onChange={(e) => setNewTicket({...newTicket, ticket_id: e.target.value.toUpperCase()})}
+                        placeholder="Ticket ID (e.g., TKT-001)" className="w-full px-4 py-2 border rounded-lg font-mono" />
                       <input value={newTicket.client_name} onChange={(e) => setNewTicket({...newTicket, client_name: e.target.value})}
-                        placeholder="Client Name" className="w-full px-4 py-2 border rounded-lg" />
+                        placeholder="Client Name" className="w-full px-4 py-2 border rounded-lg" list="clients-list" />
+                      <datalist id="clients-list">
+                        {clientsList.map(c => <option key={c} value={c} />)}
+                      </datalist>
                       <input value={newTicket.subject} onChange={(e) => setNewTicket({...newTicket, subject: e.target.value})}
                         placeholder="Subject" className="w-full px-4 py-2 border rounded-lg" />
                       <textarea value={newTicket.description} onChange={(e) => setNewTicket({...newTicket, description: e.target.value})}
@@ -496,9 +551,9 @@ const App = () => {
 
               {/* Tickets List */}
               <div className="space-y-2">
-                {ticketsList.length === 0 ? (
-                  <div className="bg-white rounded-xl p-8 text-center text-gray-500">No tickets yet</div>
-                ) : ticketsList.map(ticket => (
+                {filteredTickets.length === 0 ? (
+                  <div className="bg-white rounded-xl p-8 text-center text-gray-500">No tickets found</div>
+                ) : filteredTickets.map(ticket => (
                   <div key={ticket._id} onClick={() => openTicketDetail(ticket)}
                     className={`bg-white rounded-xl p-4 border-l-4 ${getPriorityColor(ticket.priority)} cursor-pointer hover:shadow-md transition group`}>
                     <div className="flex items-start gap-3">
@@ -520,7 +575,6 @@ const App = () => {
             </div>
           </>
         )}
-      </div>
     </div>
   );
 };
