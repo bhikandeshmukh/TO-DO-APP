@@ -1,0 +1,20 @@
+streamline-app/                    # ROOT FOLDER (Main folder)
+│
+├── backend/                       # Python Backend Folder
+│   ├── app.py                    # ← Yahan save karo
+│   ├── requirements.txt          # ← Yahan save karo
+│   └── .env                      # ← Yahan save karo (next file)
+│
+├── frontend/                      # React Frontend Folder
+│   ├── src/
+│   │   ├── App.jsx              # ← Yahan save karo
+│   │   ├── main.jsx             # ← Alag se code dunga
+│   │   └── index.css            # ← Alag se code dunga
+│   ├── public/
+│   ├── package.json             # ← Yahan save karo
+│   ├── tailwind.config.js       # ← Yahan save karo (next file)
+│   ├── postcss.config.js        # ← Alag se code dunga
+│   ├── vite.config.js           # ← Alag se code dunga
+│   └── index.html               # ← Alag se code dunga
+│
+└── README.md                     # ← Yahan save karo (last file)
