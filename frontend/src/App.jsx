@@ -208,8 +208,9 @@ const App = () => {
   const Sidebar = () => (
     <>
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:shadow-none lg:border-r`}>
-        <div className="p-4 border-b flex items-center justify-between">
+      <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:shadow-none lg:border-r`}>
+        {/* Header */}
+        <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
               <Check className="w-5 h-5 text-white" />
@@ -220,7 +221,9 @@ const App = () => {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <nav className="p-4 space-y-2">
+        
+        {/* Navigation */}
+        <nav className="p-4 space-y-2 flex-1">
           <button onClick={() => navigateTo('todos')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${currentPage === 'todos' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-gray-50'}`}>
             <ListTodo className="w-5 h-5" /> To Do List
           </button>
@@ -228,12 +231,14 @@ const App = () => {
             <Ticket className="w-5 h-5" /> Tickets
           </button>
         </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        
+        {/* User Section - Fixed at bottom */}
+        <div className="p-4 border-t bg-white flex-shrink-0">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-indigo-600" />
             </div>
-            <div className="flex-1 truncate">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user.email}</p>
             </div>
           </div>
