@@ -246,8 +246,8 @@ const StreamlineTodoApp = () => {
             <div className="inline-block p-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl mb-4">
               <Check className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Streamline</h1>
-            <p className="text-gray-500 mt-2">Professional Task Management</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">To Do App</h1>
+            <p className="text-gray-500 mt-2">Manage Your Tasks Efficiently</p>
           </div>
           <div className="space-y-4">
             <div>
@@ -375,7 +375,7 @@ const StreamlineTodoApp = () => {
               <Check className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Streamline</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">To Do App</h1>
               <p className="text-xs text-gray-500">Welcome back, {user.email}</p>
             </div>
           </div>

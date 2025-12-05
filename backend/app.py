@@ -20,7 +20,7 @@ from openpyxl import Workbook
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Configuration
 app.config['MONGO_URI'] = os.getenv('MONGO_URI', 'mongodb://localhost:27017/streamline_db')
@@ -287,7 +287,7 @@ def export_pdf(current_user):
     styles = getSampleStyleSheet()
     
     # Title
-    elements.append(Paragraph("Streamline - Todo List", styles['Title']))
+    elements.append(Paragraph("To Do App - Task List", styles['Title']))
     elements.append(Spacer(1, 20))
     
     # Table data
