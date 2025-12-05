@@ -41,4 +41,17 @@ export const exportData = {
   excel: () => api.get('/export/excel', { responseType: 'blob' })
 };
 
+export const tickets = {
+  getAll: () => api.get('/tickets'),
+  getOne: (id) => api.get(`/tickets/${id}`),
+  create: (ticket) => api.post('/tickets', ticket),
+  update: (id, ticket) => api.put(`/tickets/${id}`, ticket),
+  delete: (id) => api.delete(`/tickets/${id}`)
+};
+
+export const ticketComments = {
+  getAll: (ticketId) => api.get(`/tickets/${ticketId}/comments`),
+  create: (ticketId, text) => api.post(`/tickets/${ticketId}/comments`, { text })
+};
+
 export default api;

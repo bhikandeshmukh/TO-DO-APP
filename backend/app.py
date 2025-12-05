@@ -275,6 +275,116 @@ def delete_comment(current_user, todo_id, comment_id):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
+# Generate Ticket ID
+def generate_ticket_id():
+    import random
+    import string
+    return 'TKT-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+# Ticket Routes
+@app.route('/api/tickets', methods=['GET'])
+@token_required
+def get_tickets(current_user):
+    tickets = list(mongo.db.tickets.find({'user_id': str(current_user['_id'])}).sort('created_at', -1))
+    for ticket in tickets:
+        ticket['_id'] = str(ticket['_id'])
+        ticket['created_at'] = ticket['created_at'].isoformat()
+        if ticket.get('updated_at'):
+            ticket['updated_at'] = ticket['updated_at'].isoformat()
+    return jsonify(tickets), 200
+
+@app.route('/api/tickets', methods=['POST'])
+@token_required
+def create_ticket(current_user):
+    data = request.get_json()
+    ticket = {
+        'ticket_id': generate_ticket_id(),
+        'client_name': data.get('client_name'),
+        'subject': data.get('subject'),
+        'description': data.get('description'),
+        'status': 'open',
+        'priority': data.get('priority', 'medium'),
+        'user_id': str(current_user['_id']),
+        'created_at': datetime.utcnow(),
+        'updated_at': datetime.utcnow()
+    }
+    result = mongo.db.tickets.insert_one(ticket)
+    ticket['_id'] = str(result.inserted_id)
+    ticket['created_at'] = ticket['created_at'].isoformat()
+    ticket['updated_at'] = ticket['updated_at'].isoformat()
+    return jsonify(ticket), 201
+
+@app.route('/api/tickets/<ticket_id>', methods=['GET'])
+@token_required
+def get_ticket(current_user, ticket_id):
+    ticket = mongo.db.tickets.find_one({
+        '_id': ObjectId(ticket_id),
+        'user_id': str(current_user['_id'])
+    })
+    if not ticket:
+        return jsonify({'message': 'Ticket not found'}), 404
+    ticket['_id'] = str(ticket['_id'])
+    ticket['created_at'] = ticket['created_at'].isoformat()
+    if ticket.get('updated_at'):
+        ticket['updated_at'] = ticket['updated_at'].isoformat()
+    return jsonify(ticket), 200
+
+@app.route('/api/tickets/<ticket_id>', methods=['PUT'])
+@token_required
+def update_ticket(current_user, ticket_id):
+    data = request.get_json()
+    ticket = mongo.db.tickets.find_one({
+        '_id': ObjectId(ticket_id),
+        'user_id': str(current_user['_id'])
+    })
+    if not ticket:
+        return jsonify({'message': 'Ticket not found'}), 404
+    
+    update_data = {'updated_at': datetime.utcnow()}
+    for field in ['client_name', 'subject', 'description', 'status', 'priority']:
+        if field in data:
+            update_data[field] = data[field]
+    
+    mongo.db.tickets.update_one({'_id': ObjectId(ticket_id)}, {'$set': update_data})
+    return jsonify({'message': 'Ticket updated successfully'}), 200
+
+@app.route('/api/tickets/<ticket_id>', methods=['DELETE'])
+@token_required
+def delete_ticket(current_user, ticket_id):
+    result = mongo.db.tickets.delete_one({
+        '_id': ObjectId(ticket_id),
+        'user_id': str(current_user['_id'])
+    })
+    if result.deleted_count == 0:
+        return jsonify({'message': 'Ticket not found'}), 404
+    mongo.db.ticket_comments.delete_many({'ticket_id': ticket_id})
+    return jsonify({'message': 'Ticket deleted successfully'}), 200
+
+# Ticket Comments
+@app.route('/api/tickets/<ticket_id>/comments', methods=['GET'])
+@token_required
+def get_ticket_comments(current_user, ticket_id):
+    comments = list(mongo.db.ticket_comments.find({'ticket_id': ticket_id}).sort('created_at', -1))
+    for comment in comments:
+        comment['_id'] = str(comment['_id'])
+        comment['created_at'] = comment['created_at'].isoformat()
+    return jsonify(comments), 200
+
+@app.route('/api/tickets/<ticket_id>/comments', methods=['POST'])
+@token_required
+def add_ticket_comment(current_user, ticket_id):
+    data = request.get_json()
+    comment = {
+        'ticket_id': ticket_id,
+        'text': data.get('text'),
+        'user_email': current_user['email'],
+        'created_at': datetime.utcnow()
+    }
+    result = mongo.db.ticket_comments.insert_one(comment)
+    comment['_id'] = str(result.inserted_id)
+    comment['created_at'] = comment['created_at'].isoformat()
+    return jsonify(comment), 201
+
 # Export to PDF
 @app.route('/api/export/pdf', methods=['GET'])
 @token_required
