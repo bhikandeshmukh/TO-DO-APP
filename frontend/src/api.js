@@ -16,8 +16,8 @@ api.interceptors.request.use((config) => {
 });
 
 export const auth = {
-  register: (email, password) => 
-    api.post('/auth/register', { email, password }),
+  register: (email, password, name, mobile) => 
+    api.post('/auth/register', { email, password, name, mobile }),
   login: (email, password) => 
     api.post('/auth/login', { email, password })
 };
@@ -37,8 +37,30 @@ export const comments = {
 };
 
 export const exportData = {
-  pdf: () => api.get('/export/pdf', { responseType: 'blob' }),
-  excel: () => api.get('/export/excel', { responseType: 'blob' })
+  pdf: (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return api.get(`/export/pdf?${params.toString()}`, { responseType: 'blob' });
+  },
+  excel: (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return api.get(`/export/excel?${params.toString()}`, { responseType: 'blob' });
+  },
+  ticketsPdf: (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return api.get(`/export/tickets/pdf?${params.toString()}`, { responseType: 'blob' });
+  },
+  ticketsExcel: (startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return api.get(`/export/tickets/excel?${params.toString()}`, { responseType: 'blob' });
+  }
 };
 
 export const tickets = {
@@ -53,6 +75,41 @@ export const tickets = {
 export const ticketComments = {
   getAll: (ticketId) => api.get(`/tickets/${ticketId}/comments`),
   create: (ticketId, text) => api.post(`/tickets/${ticketId}/comments`, { text })
+};
+
+export const timeTracking = {
+  start: (todoId) => api.post(`/todos/${todoId}/time`, { action: 'start' }),
+  stop: (todoId) => api.post(`/todos/${todoId}/time`, { action: 'stop' })
+};
+
+export const activities = {
+  getAll: (limit = 50) => api.get(`/activities?limit=${limit}`)
+};
+
+export const analytics = {
+  getStats: () => api.get('/analytics/stats')
+};
+
+export const ai = {
+  getSuggestions: (context) => api.post('/ai/suggestions', { context }),
+  analyzeTask: (taskText) => api.post('/ai/analyze', { task_text: taskText }),
+  planDay: (availableHours, energyLevel, focusAreas) => api.post('/ai/plan-day', { 
+    available_hours: availableHours, 
+    energy_level: energyLevel, 
+    focus_areas: focusAreas 
+  }),
+  optimizeWorkflow: () => api.post('/ai/optimize-workflow'),
+  getSmartSuggestions: (contextType, mood, availableTime) => api.post('/ai/smart-suggestions', {
+    context_type: contextType,
+    mood: mood,
+    available_time: availableTime
+  })
+};
+
+export const userProfile = {
+  get: () => api.get('/user/profile'),
+  update: (profileData) => api.put('/user/profile', profileData),
+  changePassword: (passwordData) => api.post('/user/change-password', passwordData)
 };
 
 export default api;

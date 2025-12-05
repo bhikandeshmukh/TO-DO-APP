@@ -1,5 +1,5 @@
 {
-  "name": "To Do App",
+  "name": "To Do App - Task Management",
   "short_name": "ToDo",
   "description": "Manage Your Tasks Efficiently - Todo List & Tickets",
   "start_url": "/",
@@ -7,12 +7,25 @@
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "display_override": ["window-controls-overlay", "standalone"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icon.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
     }
   ]
 }

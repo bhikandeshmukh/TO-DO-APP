@@ -32,11 +32,17 @@ self.addEventListener('activate', (event) => {
 
 // Fetch strategy: Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
+  // Skip caching for POST requests and API calls
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone and cache successful responses
-        if (response.status === 200) {
+        // Clone and cache successful GET responses only
+        if (response.status === 200 && event.request.method === 'GET') {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
