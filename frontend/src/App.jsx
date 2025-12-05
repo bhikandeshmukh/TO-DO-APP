@@ -143,10 +143,15 @@ const App = () => {
 
   const updateTicketStatus = async (id, status) => {
     try {
+      console.log('Updating ticket:', id, 'to status:', status);
       await ticketsApi.update(id, { status });
       setTicketsList(ticketsList.map(t => t._id === id ? { ...t, status } : t));
       if (selectedTicket?._id === id) setSelectedTicket({ ...selectedTicket, status });
-    } catch (e) { alert('Failed to update'); }
+      console.log('Ticket updated successfully');
+    } catch (e) { 
+      console.error('Update error:', e.response?.data || e.message);
+      alert(e.response?.data?.message || 'Failed to update ticket'); 
+    }
   };
 
   const deleteTicket = async (id, e) => {

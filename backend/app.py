@@ -340,21 +340,31 @@ def get_ticket(current_user, ticket_id):
 @app.route('/api/tickets/<ticket_id>', methods=['PUT'])
 @token_required
 def update_ticket(current_user, ticket_id):
-    data = request.get_json()
-    ticket = mongo.db.tickets.find_one({
-        '_id': ObjectId(ticket_id),
-        'user_id': str(current_user['_id'])
-    })
-    if not ticket:
-        return jsonify({'message': 'Ticket not found'}), 404
-    
-    update_data = {'updated_at': datetime.utcnow()}
-    for field in ['client_name', 'subject', 'description', 'status', 'priority']:
-        if field in data:
-            update_data[field] = data[field]
-    
-    mongo.db.tickets.update_one({'_id': ObjectId(ticket_id)}, {'$set': update_data})
-    return jsonify({'message': 'Ticket updated successfully'}), 200
+    try:
+        data = request.get_json()
+        print(f"Updating ticket {ticket_id} with data: {data}")
+        
+        ticket = mongo.db.tickets.find_one({
+            '_id': ObjectId(ticket_id),
+            'user_id': str(current_user['_id'])
+        })
+        if not ticket:
+            print(f"Ticket {ticket_id} not found for user {current_user['_id']}")
+            return jsonify({'message': 'Ticket not found'}), 404
+        
+        update_data = {'updated_at': datetime.utcnow()}
+        for field in ['client_name', 'subject', 'description', 'status', 'priority']:
+            if field in data:
+                update_data[field] = data[field]
+        
+        print(f"Update data: {update_data}")
+        result = mongo.db.tickets.update_one({'_id': ObjectId(ticket_id)}, {'$set': update_data})
+        print(f"Update result: {result.modified_count} documents modified")
+        
+        return jsonify({'message': 'Ticket updated successfully'}), 200
+    except Exception as e:
+        print(f"Error updating ticket: {str(e)}")
+        return jsonify({'message': f'Update failed: {str(e)}'}), 500
 
 @app.route('/api/tickets/<ticket_id>', methods=['DELETE'])
 @token_required
