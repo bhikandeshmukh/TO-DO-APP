@@ -328,7 +328,7 @@ const App = () => {
           {selectedTodo.completed ? '✓ Done' : 'Mark Done'}
         </button>
       </div>
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
+      <div className="max-w-4xl mx-auto p-4 space-y-4">
         <div className={`bg-white rounded-xl p-4 border-l-4 ${getPriorityColor(selectedTodo.priority)}`}>
           <h2 className="font-semibold text-lg">{selectedTodo.text}</h2>
           <p className="text-sm text-gray-500 mt-1">Created {formatDate(selectedTodo.created_at)}</p>
@@ -371,7 +371,7 @@ const App = () => {
           <option value="closed">Closed</option>
         </select>
       </div>
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
+      <div className="max-w-4xl mx-auto p-4 space-y-4">
         <div className={`bg-white rounded-xl p-4 border-l-4 ${getPriorityColor(selectedTicket.priority)}`}>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{selectedTicket.ticket_id}</span>
@@ -413,7 +413,7 @@ const App = () => {
         {currentPage === 'dashboard' && (
           <>
             <Header title="Dashboard" />
-            <div className="max-w-5xl mx-auto p-3">
+            <div className="px-4 py-3">
               {/* Welcome Section */}
               <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl p-5 text-white mb-5 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
@@ -472,7 +472,7 @@ const App = () => {
               </div>
 
               {/* Recent Activity */}
-              <div className="grid md:grid-cols-2 gap-4 mb-5">
+              <div className="grid lg:grid-cols-3 gap-4 mb-5">
                 {/* Recent Tasks */}
                 <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100/50">
                   <div className="flex items-center justify-between mb-3">
@@ -519,6 +519,93 @@ const App = () => {
                     {ticketsList.length === 0 && <p className="text-gray-400 text-center py-3 text-xs">No tickets yet</p>}
                   </div>
                 </div>
+                
+                {/* Activity Feed */}
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Recent Activity</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {/* Combine todos and tickets for activity feed */}
+                    {[...todos.slice(0, 2).map(t => ({...t, type: 'todo'})), ...ticketsList.slice(0, 2).map(t => ({...t, type: 'ticket'}))].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 4).map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 hover:bg-white/50 rounded-lg transition-colors">
+                        <div className={`w-2 h-2 rounded-full ${item.type === 'todo' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-700 truncate">
+                            {item.type === 'todo' ? `Task: ${item.text}` : `Ticket: ${item.subject}`}
+                          </p>
+                          <p className="text-xs text-gray-400">{formatDate(item.created_at)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {todos.length === 0 && ticketsList.length === 0 && <p className="text-gray-400 text-center py-3 text-xs">No activity yet</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Section */}
+              <div className="grid lg:grid-cols-2 gap-4 mb-5">
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100/50">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Task Progress</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-600">Completed Tasks</span>
+                        <span className="text-gray-900">{todos.filter(t => t.completed).length}/{todos.length}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-emerald-500 to-green-600 h-2 rounded-full transition-all" 
+                             style={{width: `${todos.length ? (todos.filter(t => t.completed).length / todos.length) * 100 : 0}%`}}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-600">High Priority</span>
+                        <span className="text-red-600">{todos.filter(t => t.priority === 'high').length}</span>
+                      </div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-600">Medium Priority</span>
+                        <span className="text-amber-600">{todos.filter(t => t.priority === 'medium').length}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600">Low Priority</span>
+                        <span className="text-green-600">{todos.filter(t => t.priority === 'low').length}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-100/50">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Ticket Status</h3>
+                  <div className="space-y-2">
+                    {['open', 'in-progress', 'resolved', 'closed'].map(status => {
+                      const count = ticketsList.filter(t => t.status === status).length;
+                      const percentage = ticketsList.length ? (count / ticketsList.length) * 100 : 0;
+                      return (
+                        <div key={status} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              status === 'open' ? 'bg-blue-500' : 
+                              status === 'in-progress' ? 'bg-yellow-500' : 
+                              status === 'resolved' ? 'bg-green-500' : 'bg-gray-500'
+                            }`}></div>
+                            <span className="text-xs text-gray-600 capitalize">{status.replace('-', ' ')}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-1">
+                              <div className={`h-1 rounded-full transition-all ${
+                                status === 'open' ? 'bg-blue-500' : 
+                                status === 'in-progress' ? 'bg-yellow-500' : 
+                                status === 'resolved' ? 'bg-green-500' : 'bg-gray-500'
+                              }`} style={{width: `${percentage}%`}}></div>
+                            </div>
+                            <span className="text-xs font-medium text-gray-900 w-6">{count}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Quick Actions */}
@@ -556,9 +643,9 @@ const App = () => {
               <button onClick={() => handleExport('pdf')} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Export PDF"><FileText className="w-5 h-5" /></button>
               <button onClick={() => handleExport('excel')} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Export Excel"><FileSpreadsheet className="w-5 h-5" /></button>
             </Header>
-            <div className="max-w-4xl mx-auto p-3">
+            <div className="px-4 py-3">
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
                   <p className="text-xl font-semibold text-gray-900">{todos.length}</p>
                   <p className="text-xs text-gray-500">Total</p>
@@ -570,6 +657,10 @@ const App = () => {
                 <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
                   <p className="text-xl font-semibold text-emerald-600">{todos.filter(t => t.completed).length}</p>
                   <p className="text-xs text-gray-500">Done</p>
+                </div>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-xl font-semibold text-red-600">{todos.filter(t => t.priority === 'high' && !t.completed).length}</p>
+                  <p className="text-xs text-gray-500">High Priority</p>
                 </div>
               </div>
 
@@ -642,24 +733,32 @@ const App = () => {
                 <Plus className="w-4 h-4" /> New Ticket
               </button>
             </Header>
-            <div className="max-w-4xl mx-auto p-4">
+            <div className="px-4 py-3">
               {/* Stats */}
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold">{ticketsList.length}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-gray-900">{ticketsList.length}</p>
                   <p className="text-xs text-gray-500">Total</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600">{ticketsList.filter(t => t.status === 'open').length}</p>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-blue-600">{ticketsList.filter(t => t.status === 'open').length}</p>
                   <p className="text-xs text-gray-500">Open</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{ticketsList.filter(t => t.status === 'in-progress').length}</p>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-yellow-600">{ticketsList.filter(t => t.status === 'in-progress').length}</p>
                   <p className="text-xs text-gray-500">In Progress</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-green-600">{ticketsList.filter(t => t.status === 'resolved' || t.status === 'closed').length}</p>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-green-600">{ticketsList.filter(t => t.status === 'resolved').length}</p>
                   <p className="text-xs text-gray-500">Resolved</p>
+                </div>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-gray-600">{ticketsList.filter(t => t.status === 'closed').length}</p>
+                  <p className="text-xs text-gray-500">Closed</p>
+                </div>
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-gray-100/50">
+                  <p className="text-lg font-semibold text-red-600">{ticketsList.filter(t => t.priority === 'high').length}</p>
+                  <p className="text-xs text-gray-500">High Priority</p>
                 </div>
               </div>
 
